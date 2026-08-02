@@ -44,6 +44,7 @@ migrate_working_dir/
 .packages
 .pub-cache/
 .pub/
+.flutter/
 build/
 flutter_*.png
 linked_*.ds
@@ -60,6 +61,7 @@ unlinked_spec.ds
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 *.jks
+*.keystore
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
