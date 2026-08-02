@@ -2,8 +2,23 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:chopper/chopper.dart' as chopper;
-import 'package:chopper/src/chopper_log_record.dart';
 import 'package:logging/logging.dart';
+
+String redactSensitiveLogText(String input) {
+  var output = input.replaceAllMapped(
+    RegExp(r'(^|\n)(authorization:\s*)[^\r\n]*', caseSensitive: false),
+    (match) => '${match.group(1)}${match.group(2)}[REDACTED]',
+  );
+  output = output.replaceAllMapped(
+    RegExp(r'("(?:AccessToken|Token)"\s*:\s*")[^"]*(")', caseSensitive: false),
+    (match) => '${match.group(1)}[REDACTED]${match.group(2)}',
+  );
+  output = output.replaceAllMapped(
+    RegExp(r'([?&](?:api_key|access_token|token)=)[^&\s]+', caseSensitive: false),
+    (match) => '${match.group(1)}[REDACTED]',
+  );
+  return output;
+}
 
 /// A logger that aggregates the request and response logs from Chopper.
 /// Once a request (or response) is completed,
@@ -15,7 +30,7 @@ class ChopperAggregateLogger implements Logger {
 
   final Map<chopper.Request, StringBuffer> _requests = HashMap();
 
-  final Map<chopper.Response, StringBuffer> _responses = HashMap();
+  final Map<chopper.Response<dynamic>, StringBuffer> _responses = HashMap();
 
   @override
   String get name => _delegate.name;
@@ -39,12 +54,13 @@ class ChopperAggregateLogger implements Logger {
 
   @override
   void log(Level logLevel, Object? message, [Object? error, StackTrace? stackTrace, Zone? zone]) {
-    if (message is ChopperLogRecord) {
+    if (message is chopper.ChopperLogRecord) {
+      final sanitizedMessage = redactSensitiveLogText(message.message);
       if (message.request != null) {
-        _requests[message.request]?.writeln(message.message);
+        _requests[message.request]?.writeln(sanitizedMessage);
         return;
       } else if (message.response != null) {
-        _responses[message.response]?.writeln(message.message);
+        _responses[message.response]?.writeln(sanitizedMessage);
         return;
       }
     }
@@ -59,11 +75,11 @@ class ChopperAggregateLogger implements Logger {
     info(_requests.remove(request)?.toString().trim());
   }
 
-  void onStartResponse(chopper.Response response) {
+  void onStartResponse(chopper.Response<dynamic> response) {
     _responses[response] = StringBuffer();
   }
 
-  void onEndResponse(chopper.Response response) {
+  void onEndResponse(chopper.Response<dynamic> response) {
     info(_responses.remove(response)?.toString().trim());
   }
 
