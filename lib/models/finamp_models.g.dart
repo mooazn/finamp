@@ -417,7 +417,7 @@ class FinampSettingsAdapter extends TypeAdapter<FinampSettings> {
             ? DefaultSettings.accentColor
             : fields[132] as Color?,
         themeMode: fields[133] == null
-            ? ThemeMode.system
+            ? ThemeMode.dark
             : fields[133] as ThemeMode,
         amoledTheme: fields[148] == null ? false : fields[148] as bool,
         locale: fields[134] == null

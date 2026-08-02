@@ -1017,8 +1017,57 @@ class FinampApp extends ConsumerWidget {
         pageTransitionsTheme: transitionBuilder,
       ),
       darkTheme: ThemeData(
+        useMaterial3: true,
         brightness: Brightness.dark,
-        colorScheme: getColorScheme(accentColor, Brightness.dark, amoledTheme),
+        colorScheme: getColorScheme(accentColor ?? const Color(0xFF1ED760), Brightness.dark, amoledTheme).copyWith(
+          primary: accentColor ?? const Color(0xFF1ED760),
+          onPrimary: Colors.black,
+          secondary: accentColor ?? const Color(0xFF1ED760),
+          surface: amoledTheme ? Colors.black : const Color(0xFF121212),
+          surfaceContainerLowest: amoledTheme ? Colors.black : const Color(0xFF0A0A0A),
+          surfaceContainerLow: amoledTheme ? Colors.black : const Color(0xFF181818),
+          surfaceContainer: amoledTheme ? const Color(0xFF080808) : const Color(0xFF202020),
+          surfaceContainerHigh: amoledTheme ? const Color(0xFF101010) : const Color(0xFF282828),
+          surfaceContainerHighest: amoledTheme ? const Color(0xFF181818) : const Color(0xFF333333),
+          outline: const Color(0xFF535353),
+          outlineVariant: const Color(0xFF2A2A2A),
+        ),
+        scaffoldBackgroundColor: amoledTheme ? Colors.black : const Color(0xFF121212),
+        canvasColor: amoledTheme ? Colors.black : const Color(0xFF121212),
+        cardColor: amoledTheme ? const Color(0xFF101010) : const Color(0xFF181818),
+        dividerColor: const Color(0xFF2A2A2A),
+        appBarTheme: const AppBarThemeData(
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: Brightness.dark,
+            statusBarIconBrightness: Brightness.light,
+            systemNavigationBarColor: Color(0xFF090909),
+            systemNavigationBarIconBrightness: Brightness.light,
+          ),
+        ),
+        navigationBarTheme: const NavigationBarThemeData(
+          backgroundColor: Color(0xFF090909),
+          indicatorColor: Colors.transparent,
+          labelTextStyle: WidgetStatePropertyAll(TextStyle(fontWeight: FontWeight.w600)),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            foregroundColor: Colors.black,
+            backgroundColor: accentColor ?? const Color(0xFF1ED760),
+            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          foregroundColor: Colors.black,
+          backgroundColor: accentColor ?? const Color(0xFF1ED760),
+          shape: const CircleBorder(),
+        ),
+        textTheme: ThemeData.dark().textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
         snackBarTheme: const SnackBarThemeData(
           //TODO get rid of floating action buttons and re-enable the floating behavior and insetPadding
           // behavior: SnackBarBehavior.floating,

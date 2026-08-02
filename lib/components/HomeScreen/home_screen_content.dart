@@ -4,10 +4,8 @@ import 'dart:ui';
 import 'package:balanced_text/balanced_text.dart';
 import 'package:finamp/components/AlbumScreen/download_button.dart';
 import 'package:finamp/components/Buttons/cta_small.dart';
-import 'package:finamp/components/Buttons/simple_button.dart';
 import 'package:finamp/components/HomeScreen/home_screen_quick_action_button.dart';
 import 'package:finamp/components/HomeScreen/quick_action_editor.dart';
-import 'package:finamp/components/HomeScreen/show_all_button.dart';
 import 'package:finamp/components/MusicScreen/item_card.dart';
 import 'package:finamp/components/MusicScreen/item_wrapper.dart';
 import 'package:finamp/components/MusicScreen/music_screen_tab_view.dart';
@@ -16,7 +14,6 @@ import 'package:finamp/l10n/app_localizations.dart';
 import 'package:finamp/menus/components/icon_button_with_semantics.dart';
 import 'package:finamp/menus/home_section_menu.dart';
 import 'package:finamp/models/finamp_models.dart';
-import 'package:finamp/models/jellyfin_models.dart';
 import 'package:finamp/models/music_models.dart';
 import 'package:finamp/screens/home_screen_settings_screen.dart';
 import 'package:finamp/screens/music_screen.dart';
@@ -67,108 +64,126 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
     widget.refresh?.callback = _refresh;
     return RefreshIndicator(
       onRefresh: () async => _refresh(),
-      child: CustomScrollView(
-        slivers: [
-          if (ref.watch(finampSettingsProvider.homeScreenConfiguration).actions.isNotEmpty)
-            SliverPadding(padding: const EdgeInsets.only(top: 10.0)),
-          SliverLayoutBuilder(
-            builder: (context, constraints) {
-              final double maxWidth = isDesktop ? 800.0 : 600.0;
-              final viewPadding = MediaQuery.paddingOf(context);
-              final usableWidth = constraints.crossAxisExtent - viewPadding.left - viewPadding.right;
-              // center action buttons
-              // Mandatory padding should be enough to clear scrollbar
-              final horizontalPadding = max(0, (usableWidth - maxWidth) / 2) + 14.0;
-              final configuredQuickActions = ref.watch(finampSettingsProvider.homeScreenConfiguration).actions;
-              return SliverPadding(
-                padding: EdgeInsets.only(
-                  left: horizontalPadding + viewPadding.left,
-                  right: horizontalPadding + viewPadding.right,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Wrap(
-                    spacing: isDesktop ? 4.0 : 0,
-                    runSpacing: 8,
-                    direction: Axis.horizontal,
-                    alignment: WrapAlignment.spaceBetween,
-                    runAlignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.start,
-                    children: configuredQuickActions.indexed.map((indexedAction) {
-                      final (index, action) = indexedAction;
-                      //!!! custom adaptive grid
-                      // calculate button width based on available space and number of actions per row
-                      final double quickActionsWidth = min(
-                        usableWidth - horizontalPadding - horizontalPadding,
-                        maxWidth,
-                      );
-                      double verticalButtonWidth = (quickActionsWidth / 3) - 2 * (5.0);
-                      double horizontalButtonWidth = (quickActionsWidth / 2) - 1 * (8.0);
-                      double singleButtonWidth = quickActionsWidth;
-                      double buttonWidth;
-                      // always fill each row completely
-                      if (configuredQuickActions.length == 1) {
-                        buttonWidth = singleButtonWidth;
-                      } else if (configuredQuickActions.length % 3 == 0) {
-                        buttonWidth = verticalButtonWidth;
-                      } else if (configuredQuickActions.length == 4) {
-                        buttonWidth = horizontalButtonWidth;
-                      } else if ((configuredQuickActions.length % 3 == 1 &&
-                              configuredQuickActions.length - index <= 4) ||
-                          (configuredQuickActions.length % 3 == 2 && configuredQuickActions.length - index < 3)) {
-                        buttonWidth = horizontalButtonWidth;
-                      } else {
-                        buttonWidth = verticalButtonWidth;
-                      }
-                      //TODO possibly use CustomMultiChildLayout instead of Wrap to allow actions to stretch in height to fill each row, in case of multi-line actions
-                      return HomeScreenQuickActionButton(
-                        width: buttonWidth,
-                        text: action.getTitle(context.l10n),
-                        label: action.action.getDescription(context),
-                        icon: action.action.getIcon(),
-                        vertical: buttonWidth == verticalButtonWidth,
-                        onPressed: () async => QuickActionsService.handleAction(action, context),
-                        onSecondaryPressed: () => editQuickAction(context, index),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              );
-            },
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+            colors: [Color(0x5520A85B), Color(0x00121212)],
+            stops: [0, 0.58],
           ),
-          const SliverPadding(padding: EdgeInsets.only(top: 4.0)),
-          SliverMainAxisGroup(
-            slivers: ref
-                .watch(finampSettingsProvider.homeScreenConfiguration)
-                .sections
-                .map((sectionInfo) => HomeScreenSection(sectionInfo: sectionInfo))
-                .toList(),
-          ),
-          const SliverPadding(padding: EdgeInsets.only(top: 30)),
-          ...[
-            SliverToBoxAdapter(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 200),
-                  child: BalancedText(
-                    context.l10n.lookingForSomethingElse,
-                    textAlign: TextAlign.center,
-                    style: TextTheme.of(context).bodySmall,
-                  ),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(14, 18, 14, 12),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  context.l10n.home,
+                  style: const TextStyle(fontSize: 30, height: 1, fontWeight: FontWeight.w900, letterSpacing: -1),
                 ),
               ),
             ),
-            const SliverPadding(padding: EdgeInsets.only(top: 12)),
-            SliverToBoxAdapter(
-              child: Center(
-                child: CTASmall(
-                  text: context.l10n.customizeHomeScreen,
-                  icon: TablerIcons.settings,
-                  onPressed: () => Navigator.pushNamed(context, HomeScreenSettingsScreen.routeName),
+            if (ref.watch(finampSettingsProvider.homeScreenConfiguration).actions.isNotEmpty)
+              SliverPadding(padding: const EdgeInsets.only(top: 10.0)),
+            SliverLayoutBuilder(
+              builder: (context, constraints) {
+                final double maxWidth = isDesktop ? 800.0 : 600.0;
+                final viewPadding = MediaQuery.paddingOf(context);
+                final usableWidth = constraints.crossAxisExtent - viewPadding.left - viewPadding.right;
+                // center action buttons
+                // Mandatory padding should be enough to clear scrollbar
+                final horizontalPadding = max(0, (usableWidth - maxWidth) / 2) + 14.0;
+                final configuredQuickActions = ref.watch(finampSettingsProvider.homeScreenConfiguration).actions;
+                return SliverPadding(
+                  padding: EdgeInsets.only(
+                    left: horizontalPadding + viewPadding.left,
+                    right: horizontalPadding + viewPadding.right,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: Wrap(
+                      spacing: isDesktop ? 4.0 : 0,
+                      runSpacing: 8,
+                      direction: Axis.horizontal,
+                      alignment: WrapAlignment.spaceBetween,
+                      runAlignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.start,
+                      children: configuredQuickActions.indexed.map((indexedAction) {
+                        final (index, action) = indexedAction;
+                        //!!! custom adaptive grid
+                        // calculate button width based on available space and number of actions per row
+                        final double quickActionsWidth = min(
+                          usableWidth - horizontalPadding - horizontalPadding,
+                          maxWidth,
+                        );
+                        double verticalButtonWidth = (quickActionsWidth / 3) - 2 * (5.0);
+                        double horizontalButtonWidth = (quickActionsWidth / 2) - 1 * (8.0);
+                        double singleButtonWidth = quickActionsWidth;
+                        double buttonWidth;
+                        // always fill each row completely
+                        if (configuredQuickActions.length == 1) {
+                          buttonWidth = singleButtonWidth;
+                        } else if (configuredQuickActions.length % 3 == 0) {
+                          buttonWidth = verticalButtonWidth;
+                        } else if (configuredQuickActions.length == 4) {
+                          buttonWidth = horizontalButtonWidth;
+                        } else if ((configuredQuickActions.length % 3 == 1 &&
+                                configuredQuickActions.length - index <= 4) ||
+                            (configuredQuickActions.length % 3 == 2 && configuredQuickActions.length - index < 3)) {
+                          buttonWidth = horizontalButtonWidth;
+                        } else {
+                          buttonWidth = verticalButtonWidth;
+                        }
+                        //TODO possibly use CustomMultiChildLayout instead of Wrap to allow actions to stretch in height to fill each row, in case of multi-line actions
+                        return HomeScreenQuickActionButton(
+                          width: buttonWidth,
+                          text: action.getTitle(context.l10n),
+                          label: action.action.getDescription(context),
+                          icon: action.action.getIcon(),
+                          vertical: buttonWidth == verticalButtonWidth,
+                          onPressed: () async => QuickActionsService.handleAction(action, context),
+                          onSecondaryPressed: () => editQuickAction(context, index),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SliverPadding(padding: EdgeInsets.only(top: 4.0)),
+            SliverMainAxisGroup(
+              slivers: ref
+                  .watch(finampSettingsProvider.homeScreenConfiguration)
+                  .sections
+                  .map((sectionInfo) => HomeScreenSection(sectionInfo: sectionInfo))
+                  .toList(),
+            ),
+            const SliverPadding(padding: EdgeInsets.only(top: 30)),
+            ...[
+              SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 200),
+                    child: BalancedText(
+                      context.l10n.lookingForSomethingElse,
+                      textAlign: TextAlign.center,
+                      style: TextTheme.of(context).bodySmall,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
-          /*const SliverPadding(padding: EdgeInsets.only(top: 60)),
+              const SliverPadding(padding: EdgeInsets.only(top: 12)),
+              SliverToBoxAdapter(
+                child: Center(
+                  child: CTASmall(
+                    text: context.l10n.customizeHomeScreen,
+                    icon: TablerIcons.settings,
+                    onPressed: () => Navigator.pushNamed(context, HomeScreenSettingsScreen.routeName),
+                  ),
+                ),
+              ),
+            ],
+            /*const SliverPadding(padding: EdgeInsets.only(top: 60)),
           ...[
             // monochrome icon
             SliverToBoxAdapter(
@@ -188,8 +203,9 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
               ),
             ),
           ],*/
-          SliverSafeArea(top: false, sliver: SliverPadding(padding: const EdgeInsets.only(bottom: 40.0))),
-        ],
+            SliverSafeArea(top: false, sliver: SliverPadding(padding: const EdgeInsets.only(bottom: 40.0))),
+          ],
+        ),
       ),
     );
   }

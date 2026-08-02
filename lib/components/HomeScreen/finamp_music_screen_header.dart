@@ -62,11 +62,13 @@ class FinampMusicScreenHeader extends ConsumerWidget implements PreferredSizeWid
 
   bool get backButtonInsteadOfTabs => singleTabConfig != null;
 
+  bool get showTopTabs => !(Platform.isAndroid || Platform.isIOS);
+
   @override
   Size get preferredSize => Size.fromHeight(
     _upperToolbarHeight +
         ((Platform.isLinux || Platform.isWindows || Platform.isMacOS) ? 12.0 : 0) +
-        (backButtonInsteadOfTabs ? 0 : 42),
+        (backButtonInsteadOfTabs || !showTopTabs ? 0 : 42),
   ); // Standard height
 
   @override
@@ -237,7 +239,7 @@ class FinampMusicScreenHeader extends ConsumerWidget implements PreferredSizeWid
                             singleTabConfig?.getTitle(context.l10n) ??
                                 finampUserHelper.currentUser?.currentView?.name ??
                                 appName,
-                            style: TextStyle(fontSize: 20),
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           );
@@ -315,7 +317,7 @@ class FinampMusicScreenHeader extends ConsumerWidget implements PreferredSizeWid
             ),
           ),
         ),
-        if (!backButtonInsteadOfTabs)
+        if (!backButtonInsteadOfTabs && showTopTabs)
           TabBar(
             controller: tabController,
             indicator: BoxDecoration(borderRadius: BorderRadius.circular(8.0), color: activeTabBackgroundColor),

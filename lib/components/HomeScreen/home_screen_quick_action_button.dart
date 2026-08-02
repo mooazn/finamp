@@ -1,5 +1,4 @@
 import 'package:finamp/services/feedback_helper.dart';
-import 'package:finamp/utils/platform_helper.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreenQuickActionButton extends StatelessWidget {
@@ -28,32 +27,38 @@ class HomeScreenQuickActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final accentColor = disabled ? ColorScheme.of(context).primary.withOpacity(0.5) : ColorScheme.of(context).primary;
 
-    final buttonChildren = [
-      Icon(icon, size: 16, color: accentColor, weight: 1.0, applyTextScaling: true),
-      Text(
-        text,
-        style: TextStyle(
-          color:
-              (Theme.brightnessOf(context) == Brightness.light
-                      ? Color.alphaBlend(accentColor.withOpacity(0.33), Colors.black)
-                      : Colors.white)
-                  .withOpacity(disabled ? 0.5 : 1.0),
-          fontSize: 13,
-          height: 0.9,
-          fontWeight: FontWeight.w500,
+    final buttonContent = Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [accentColor.withOpacity(0.65), accentColor.withOpacity(0.22)],
+            ),
+          ),
+          child: Icon(icon, size: 21, color: Colors.white, weight: 1.0, applyTextScaling: true),
         ),
-        textAlign: TextAlign.center,
-      ),
-    ];
-
-    final buttonContent = vertical
-        ? Column(mainAxisAlignment: MainAxisAlignment.center, spacing: isDesktop ? 4.0 : 6.0, children: buttonChildren)
-        : Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            alignment: WrapAlignment.center,
-            spacing: 6.0,
-            children: buttonChildren,
-          );
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withOpacity(disabled ? 0.5 : 1.0),
+              fontSize: 13,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
 
     return Semantics(
       label: text,
@@ -88,15 +93,11 @@ class HomeScreenQuickActionButton extends StatelessWidget {
 
             style: ButtonStyle(
               shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(isDesktop ? 8 : 12)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
-              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
-                EdgeInsets.symmetric(horizontal: 8, vertical: isDesktop ? 16 : 8),
-              ),
+              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.zero),
               backgroundColor: WidgetStateProperty.all<Color>(
-                Theme.brightnessOf(context) == Brightness.dark
-                    ? accentColor.withOpacity(disabled ? 0.05 : 0.15)
-                    : Color.alphaBlend(accentColor.withOpacity(0.2), Colors.white).withOpacity(disabled ? 0.5 : 1.0),
+                const Color(0xFF282828).withOpacity(disabled ? 0.5 : 1.0),
               ),
             ),
             child: buttonContent,

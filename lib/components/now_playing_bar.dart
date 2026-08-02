@@ -35,7 +35,9 @@ import 'PlayerScreen/player_split_screen_scaffold.dart';
 import 'album_image.dart';
 
 class NowPlayingBar extends ConsumerWidget {
-  const NowPlayingBar({super.key});
+  const NowPlayingBar({super.key, this.useBottomSafeArea = true});
+
+  final bool useBottomSafeArea;
 
   static const horizontalPadding = 8.0;
   static const albumImageSize = 64.0;
@@ -523,6 +525,7 @@ class NowPlayingBar extends ConsumerWidget {
         // The now playing bar must be enclosed in a SafeArea at all times so that the enclosing scaffold properly adds
         // bottom padding, even if the now playing bar itself is empty.
         child: SafeArea(
+          bottom: useBottomSafeArea,
           // use consumer to obtain ref of correct (player screen theme) ProviderContainer
           child: Consumer(
             builder: (context, ref, child) {

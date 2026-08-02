@@ -7,6 +7,7 @@ import 'package:finamp/components/MusicScreen/music_screen_tab_view.dart';
 import 'package:finamp/components/MusicScreen/sort_and_filter_row.dart';
 import 'package:finamp/components/global_snackbar.dart';
 import 'package:finamp/components/now_playing_bar.dart';
+import 'package:finamp/components/spotify_bottom_navigation.dart';
 import 'package:finamp/l10n/app_localizations.dart';
 import 'package:finamp/menus/music_screen_drawer.dart';
 import 'package:finamp/models/finamp_models.dart';
@@ -77,6 +78,40 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
       searchQuery = null;
       isSearching = false;
     });
+  }
+
+  void _startSearching(List<ContentType> sortedTabs) {
+    setState(() {
+      isSearching = true;
+      if (_tabController != null &&
+          !_tabController!.indexIsChanging &&
+          sortedTabs.elementAt(_tabController!.index) == ContentType.home) {
+        final firstSearchableTab = sortedTabs.indexWhere((tabType) => tabType != ContentType.home);
+        if (firstSearchableTab >= 0) {
+          _tabController!.index = firstSearchableTab;
+        }
+      }
+    });
+  }
+
+  void _selectTab(List<ContentType> sortedTabs, ContentType tabType) {
+    final index = sortedTabs.indexOf(tabType);
+    if (index < 0) return;
+    _stopSearching();
+    _tabController?.animateTo(index, duration: const Duration(milliseconds: 240), curve: Curves.easeOutCubic);
+  }
+
+  ContentType _libraryTab(List<ContentType> sortedTabs) {
+    for (final tabType in const [
+      ContentType.albums,
+      ContentType.genericArtists,
+      ContentType.playlists,
+      ContentType.tracks,
+      ContentType.genres,
+    ]) {
+      if (sortedTabs.contains(tabType)) return tabType;
+    }
+    return sortedTabs.first;
   }
 
   void _tabIndexCallback() {
@@ -236,17 +271,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
           singleTabConfig: widget.singleTabConfig,
           sortedTabs: sortedTabs.toList(),
           tabController: _tabController,
-          onSearch: () => setState(() {
-            isSearching = true;
-            if (_tabController != null &&
-                !_tabController!.indexIsChanging &&
-                sortedTabs.elementAt(_tabController!.index) == ContentType.home) {
-              // we can't search on the home tab yet
-              _tabController!.index = sortedTabs.toList().indexWhere(
-                (ContentType tabType) => tabType != ContentType.home,
-              );
-            }
-          }),
+          onSearch: () => _startSearching(sortedTabs.toList()),
           onStopSearch: _stopSearching,
           onUpdateSearchQuery: (value) {
             setState(() {
@@ -257,7 +282,22 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
           textEditingController: textEditingController,
           isSearching: isSearching,
         ),
-        bottomNavigationBar: NowPlayingBar(),
+        bottomNavigationBar: widget.showHeader
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const NowPlayingBar(useBottomSafeArea: false),
+                  SpotifyBottomNavigation(
+                    homeSelected: !isSearching && sortedTabs.elementAt(_tabController!.index) == ContentType.home,
+                    searchSelected: isSearching,
+                    librarySelected: !isSearching && sortedTabs.elementAt(_tabController!.index) != ContentType.home,
+                    onHome: () => _selectTab(sortedTabs.toList(), ContentType.home),
+                    onSearch: () => _startSearching(sortedTabs.toList()),
+                    onLibrary: () => _selectTab(sortedTabs.toList(), _libraryTab(sortedTabs.toList())),
+                  ),
+                ],
+              )
+            : const NowPlayingBar(),
         drawerEnableOpenDragGesture: widget.showHeader,
         drawer: widget.showHeader ? const MusicScreenDrawer() : null,
         floatingActionButton: Padding(

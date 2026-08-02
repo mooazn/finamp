@@ -108,7 +108,7 @@ class DefaultSettings {
   // These consts are so that we can easily keep the same default for
   // FinampSettings's constructor and Hive's defaultValue.
   static const isOffline = false;
-  static const themeMode = ThemeMode.system;
+  static const themeMode = ThemeMode.dark;
   static const amoledTheme = false;
   static const Locale? locale = null;
   static const Color? accentColor = null;
