@@ -130,6 +130,15 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
     setState(() {});
   }
 
+  List<ContentType> _visibleTabs() {
+    final currentView = ref.watch(FinampUserHelper.finampCurrentUserProvider)?.currentView;
+    final enabledTabs = ref
+        .watch(finampSettingsProvider.tabOrder)
+        .where((tab) => tab.isTab)
+        .where((tab) => ref.watch(finampSettingsProvider.showTabs(tab)) ?? false);
+    return visibleMusicTabsForLibrary(enabledTabs, currentView);
+  }
+
   void _buildTabController() {
     _tabController?.removeListener(_tabIndexCallback);
     _tabController?.dispose();
@@ -137,15 +146,21 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
     if (widget.singleTabConfig != null) {
       _tabController = TabController(length: 1, vsync: this, initialIndex: 0);
     } else {
-      final tabs = ref
-          .watch(finampSettingsProvider.tabOrder)
-          .where((x) => x.isTab)
-          .where((e) => ref.watch(finampSettingsProvider.select((value) => value.value?.showTabs[e])) ?? false);
+      final tabs = _visibleTabs();
+      final requestedIndex = widget.initialTab == null ? -1 : tabs.indexOf(widget.initialTab!);
+      final mixesSongsIndex =
+          isMediaControlMixesLibrary(ref.watch(FinampUserHelper.finampCurrentUserProvider)?.currentView)
+          ? tabs.indexOf(ContentType.tracks)
+          : -1;
 
       _tabController = TabController(
         length: tabs.length,
         vsync: this,
-        initialIndex: widget.initialTab == null ? 0 : tabs.toList().indexOf(widget.initialTab!),
+        initialIndex: requestedIndex >= 0
+            ? requestedIndex
+            : mixesSongsIndex >= 0
+            ? mixesSongsIndex
+            : 0,
       );
     }
 
@@ -272,9 +287,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
               CollectionHomeSection() => ContentType.mixed,
             },
           ]
-        : ref
-              .watch(finampSettingsProvider.tabOrder)
-              .where((e) => ref.watch(finampSettingsProvider.showTabs(e)) ?? false);
+        : _visibleTabs();
 
     if (sortedTabs.length != _tabController?.length) {
       _musicScreenLogger.info(
@@ -422,7 +435,11 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
                 if ((Platform.isAndroid || Platform.isIOS) &&
                     !isSearching &&
                     sortedTabs.elementAt(_tabController!.index) != ContentType.home)
-                  _MobileLibraryFilters(tabs: sortedTabs.toList(), controller: _tabController!),
+                  _MobileLibraryFilters(
+                    tabs: sortedTabs.toList(),
+                    controller: _tabController!,
+                    useSongsLabel: isMediaControlMixesLibrary(currentUser?.currentView),
+                  ),
                 Expanded(child: tabView),
               ],
             );
@@ -467,10 +484,11 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
 }
 
 class _MobileLibraryFilters extends StatelessWidget {
-  const _MobileLibraryFilters({required this.tabs, required this.controller});
+  const _MobileLibraryFilters({required this.tabs, required this.controller, required this.useSongsLabel});
 
   final List<ContentType> tabs;
   final TabController controller;
+  final bool useSongsLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -488,7 +506,11 @@ class _MobileLibraryFilters extends StatelessWidget {
           return ChoiceChip(
             selected: selected,
             showCheckmark: false,
-            label: Text(tab.toLocalisedString(AppLocalizations.of(context)!)),
+            label: Text(
+              useSongsLabel && tab == ContentType.tracks
+                  ? "Songs"
+                  : tab.toLocalisedString(AppLocalizations.of(context)!),
+            ),
             labelStyle: TextStyle(
               color: selected ? Colors.black : Colors.white,
               fontSize: 13,
