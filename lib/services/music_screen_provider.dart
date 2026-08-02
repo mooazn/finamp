@@ -335,6 +335,29 @@ Future<List<BaseItemDto>?> loadHomeSectionItems(
       .nonNulls
       .join(",");
 
+  if (request.tab == ContentType.tracks && isMediaControlMixesLibrary(library)) {
+    // MediaControl downloads are standalone audio files without album
+    // metadata. Use the same Random audio query that powers Shuffle (which is
+    // known to return these items), then sort and paginate the small Mixes
+    // collection locally. A timeout prevents the UI from spinning forever if
+    // Jellyfin never completes the request.
+    final mixSearchTerm = searchFilter?.extraString.trim();
+    final record = await jellyfinApiHelper
+        .getItemsWithTotalRecordCount(
+          parentItem: library,
+          includeItemTypes: BaseItemDtoType.track.jellyfinName,
+          sortBy: SortBy.random.jellyfinName(ContentType.tracks),
+          searchTerm: mixSearchTerm == null || mixSearchTerm.isEmpty ? null : mixSearchTerm,
+          filters: filters.isEmpty ? null : filters,
+          genreFilter: genreFilter?.extraBaseItem.id,
+          limit: 10000,
+        )
+        .timeout(const Duration(seconds: 20));
+    final items = List<BaseItemDto>.from(record.items ?? const []);
+    sortItems(items, request.sortConfig.sortBy, request.sortConfig.sortOrder);
+    return items.skip(startIndex).take(limit).toList();
+  }
+
   return jellyfinApiHelper.getItems(
     libraryFilter: library?.id,
     parentItem: request.tab == ContentType.playlists ? null : (artistFilter?.extraBaseItem ?? library),

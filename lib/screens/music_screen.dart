@@ -184,12 +184,6 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
           "Automatically added music libraries: ${newLibraries.map((view) => view.name).join(", ")}",
         );
       }
-
-      // Jellyfin libraries can gain new items outside Finamp (for example when
-      // MediaControl downloads a mix). Refresh the already-mounted paged tabs
-      // as well as the list of libraries so an empty cached page cannot hide a
-      // newly scanned track while Shuffle can still find it with a fresh query.
-      musicScreenRefreshStream.add(null);
     } catch (error, stackTrace) {
       _musicScreenLogger.warning("Couldn't refresh music libraries", error, stackTrace);
     }
