@@ -6,7 +6,7 @@
 
 ## Shortened Release Notes (For Stores)
 
-Welcome to Finamp's redesign beta!  
+Welcome to Finamp's redesign beta.
 This is a work-in-progress effort to transform Finamp into a modern, beautiful, and feature-rich music player made specifically for Jellyfin.
 
 Please join the discussion on Discord (https://discord.gg/EAeSaEjtuQ) or GitHub (https://github.com/jmshrv/finamp/discussions/603) and let us know what you think!
