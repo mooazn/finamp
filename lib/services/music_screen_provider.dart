@@ -272,6 +272,7 @@ Future<List<BaseItemDto>?> loadHomeSectionItems(
   required int limit,
 }) async {
   final jellyfinApiHelper = GetIt.instance<JellyfinApiHelper>();
+  final currentUser = ref.watch(FinampUserHelper.finampCurrentUserProvider);
 
   // If the fully downloaded filter is active, just use the offline items.
   if (ref.watch(finampSettingsProvider.isOffline) ||
@@ -283,9 +284,7 @@ Future<List<BaseItemDto>?> loadHomeSectionItems(
   if (request.library == allLibraryPlaceholder) {
     libraryId = null;
   } else if (request.library == currentLibraryPlaceholder) {
-    final nullableLibraryId = ref.watch<BaseItemId?>(
-      FinampUserHelper.finampCurrentUserProvider.select((value) => value?.currentView?.id),
-    );
+    final nullableLibraryId = currentUser?.currentView?.id;
     if (nullableLibraryId == null) {
       return [];
     } else {
@@ -298,7 +297,10 @@ Future<List<BaseItemDto>?> loadHomeSectionItems(
   // TODO refactor so we only need to provide the id?
   BaseItemDto? library;
   if (libraryId != null) {
-    library = await ref.watch(itemByIdProvider(libraryId).future);
+    // The saved view is the same library object used by Shuffle. Prefer it to
+    // an extra item-by-id request, which is not reliable for every Jellyfin
+    // view type (notably Mixed Content libraries).
+    library = currentUser?.views[libraryId] ?? await ref.watch(itemByIdProvider(libraryId).future);
     if (library == null) {
       return [];
     }
@@ -316,6 +318,23 @@ Future<List<BaseItemDto>?> loadHomeSectionItems(
 
   final artistType = artistFilter != null ? ref.watch(finampSettingsProvider.defaultArtistType) : tabArtistType;
 
+  final filters = request.sortConfig.filters
+      .map(
+        (filter) => switch (filter.type) {
+          ItemFilterType.isFavorite => "IsFavorite",
+          ItemFilterType.isFullyDownloaded => null, // only applicable for offline mode
+          // ItemFilterType.startsWithCharacter => "NameStartsWith: ${filter.value}",
+          ItemFilterType.startsWithCharacter =>
+            throw UnimplementedError(), //TODO properly handle the "NameStartsWith" filter in the API helper
+          ItemFilterType.genreFilter => null,
+          ItemFilterType.artistFilter => null,
+          ItemFilterType.searchTerm => null,
+          ItemFilterType.isUnplayed => "IsUnplayed",
+        },
+      )
+      .nonNulls
+      .join(",");
+
   return jellyfinApiHelper.getItems(
     libraryFilter: library?.id,
     parentItem: request.tab == ContentType.playlists ? null : (artistFilter?.extraBaseItem ?? library),
@@ -323,22 +342,7 @@ Future<List<BaseItemDto>?> loadHomeSectionItems(
     sortBy: request.sortConfig.sortBy.jellyfinName(request.tab),
     sortOrder: request.sortConfig.sortOrder.toString(),
     searchTerm: searchFilter?.extraString.trim(),
-    filters: request.sortConfig.filters
-        .map(
-          (filter) => switch (filter.type) {
-            ItemFilterType.isFavorite => "IsFavorite",
-            ItemFilterType.isFullyDownloaded => null, // only applicable for offline mode
-            // ItemFilterType.startsWithCharacter => "NameStartsWith: ${filter.value}",
-            ItemFilterType.startsWithCharacter =>
-              throw UnimplementedError(), //TODO properly handle the "NameStartsWith" filter in the API helper
-            ItemFilterType.genreFilter => null,
-            ItemFilterType.artistFilter => null,
-            ItemFilterType.searchTerm => null,
-            ItemFilterType.isUnplayed => "IsUnplayed",
-          },
-        )
-        .nonNulls
-        .join(","),
+    filters: filters.isEmpty ? null : filters,
     startIndex: request.sortConfig.sortBy == SortBy.random ? 0 : startIndex,
     limit: limit,
     isFavorite: JellyfinApiHelper.getIsFavoriteFilter(request.tab, request.sortConfig.filters),

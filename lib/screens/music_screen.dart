@@ -169,6 +169,12 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
           "Automatically added music libraries: ${newLibraries.map((view) => view.name).join(", ")}",
         );
       }
+
+      // Jellyfin libraries can gain new items outside Finamp (for example when
+      // MediaControl downloads a mix). Refresh the already-mounted paged tabs
+      // as well as the list of libraries so an empty cached page cannot hide a
+      // newly scanned track while Shuffle can still find it with a fresh query.
+      musicScreenRefreshStream.add(null);
     } catch (error, stackTrace) {
       _musicScreenLogger.warning("Couldn't refresh music libraries", error, stackTrace);
     }
@@ -255,7 +261,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
     if (_tabController == null) {
       _buildTabController();
     }
-    ref.watch(FinampUserHelper.finampCurrentUserProvider);
+    final currentUser = ref.watch(FinampUserHelper.finampCurrentUserProvider);
     // Get the filtered tab or the tabs from the user's tab order,
     // and filter them to only include enabled tabs
     final sortedTabs = widget.singleTabConfig != null
@@ -372,7 +378,10 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
                 } else {
                   displayable = MusicScreenPlayable(
                     tab: contentTabType,
-                    library: currentLibraryPlaceholder,
+                    // Use the resolved library as part of the paging provider's
+                    // identity. A shared "current library" placeholder can
+                    // otherwise retain pages loaded for the previous library.
+                    library: currentUser?.currentViewId ?? currentLibraryPlaceholder,
                     source: musicScreenSource,
                     sortConfig: ref
                         .watch(resolveSortProvider(sortAndFilterControllerMap[contentTabType]!))

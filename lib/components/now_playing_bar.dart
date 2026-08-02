@@ -260,11 +260,7 @@ class NowPlayingBar extends ConsumerWidget {
                           children: [
                             if (ref.watch(finampSettingsProvider.showProgressOnNowPlayingBar))
                               Positioned.fill(child: ColoredBox(color: remainingPartBackgroundColor)),
-                            AlbumImage(
-                              placeholderBuilder: (_) => const SizedBox.shrink(),
-                              imageListenable: currentAlbumImageProvider,
-                              borderRadius: BorderRadius.zero,
-                            ),
+                            AlbumImage(imageListenable: currentAlbumImageProvider, borderRadius: BorderRadius.zero),
                             if (!showPlayButtonAtEnd)
                               AudioFadeProgressVisualizerContainer(
                                 key: const Key("AlbumArtAudioFadeProgressVisualizer"),

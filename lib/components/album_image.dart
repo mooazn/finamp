@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -216,7 +217,7 @@ class BareAlbumImage extends ConsumerWidget {
   final bool onZoomRoute;
 
   static Widget defaultPlaceholderBuilder(BuildContext context) {
-    return Container(color: Theme.of(context).cardColor);
+    return const DefaultArtwork();
   }
 
   static Widget defaultErrorBuilder(BuildContext context, _, __) {
@@ -326,7 +327,53 @@ class _AlbumImageErrorPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(color: Theme.of(context).cardColor, child: const Icon(Icons.album));
+    return const DefaultArtwork();
+  }
+}
+
+/// Consistent artwork for audio that has no cover image on the Jellyfin server.
+class DefaultArtwork extends StatelessWidget {
+  const DefaultArtwork({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.brightnessOf(context) == Brightness.dark;
+    final baseColor = isDark ? const Color(0xFF242424) : colorScheme.surfaceContainerHighest;
+    final accentColor = Color.alphaBlend(colorScheme.primary.withValues(alpha: isDark ? 0.30 : 0.18), baseColor);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [accentColor, baseColor],
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final shortestSide = math.min(constraints.maxWidth, constraints.maxHeight);
+          final iconSize = shortestSide.isFinite ? (shortestSide * 0.30).clamp(18.0, 96.0) : 48.0;
+          final badgeSize = shortestSide.isFinite ? (shortestSide * 0.56).clamp(32.0, 180.0) : 88.0;
+
+          return Center(
+            child: Container(
+              width: badgeSize,
+              height: badgeSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.06),
+              ),
+              child: Icon(
+                Icons.music_note_rounded,
+                size: iconSize,
+                color: colorScheme.onSurface.withValues(alpha: isDark ? 0.72 : 0.58),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
