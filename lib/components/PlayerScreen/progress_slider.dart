@@ -146,6 +146,7 @@ class _ProgressSliderDuration extends StatelessWidget {
         Text(
           printDuration(currentPosition),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Colors.white.withValues(alpha: 0.72),
             height: 0.5, // reduce line height
             fontFeatures: const [
               // fixed-width digits
@@ -160,6 +161,7 @@ class _ProgressSliderDuration extends StatelessWidget {
             isRemaining: showRemaining,
           ),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Colors.white.withValues(alpha: 0.72),
             height: 0.5, // reduce line height
             fontFeatures: const [
               // fixed-width digits
@@ -203,15 +205,19 @@ class __PlaybackProgressSliderState extends ConsumerState<_PlaybackProgressSlide
       data: widget.allowSeeking
           // ? _sliderThemeData.copyWith(
           ? SliderTheme.of(context).copyWith(
-              inactiveTrackColor: IconTheme.of(context).color!.withOpacity(0.35),
-              secondaryActiveTrackColor: IconTheme.of(context).color!.withOpacity(0.6),
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+              activeTrackColor: Colors.white,
+              inactiveTrackColor: Colors.white.withValues(alpha: 0.28),
+              secondaryActiveTrackColor: Colors.white.withValues(alpha: 0.48),
+              thumbColor: Colors.white,
+              overlayColor: Colors.white.withValues(alpha: 0.12),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             )
           // )
           // : _sliderThemeData.copyWith(
           : SliderTheme.of(context).copyWith(
-              inactiveTrackColor: IconTheme.of(context).color!.withOpacity(0.35),
-              secondaryActiveTrackColor: IconTheme.of(context).color!.withOpacity(0.6),
+              activeTrackColor: Colors.white,
+              inactiveTrackColor: Colors.white.withValues(alpha: 0.28),
+              secondaryActiveTrackColor: Colors.white.withValues(alpha: 0.48),
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0.1),
               // gets rid of both horizontal and vertical padding
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 0.1),

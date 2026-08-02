@@ -95,8 +95,8 @@ class PlayerScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Color.alphaBlend(
           Theme.brightnessOf(context) == Brightness.dark
-              ? IconTheme.of(context).color!.withOpacity(0.35)
-              : IconTheme.of(context).color!.withOpacity(0.5),
+              ? IconTheme.of(context).color!.withValues(alpha: 0.35)
+              : IconTheme.of(context).color!.withValues(alpha: 0.5),
           Theme.brightnessOf(context) == Brightness.dark ? Colors.black : Colors.white,
         ),
         // Required for sleep timer input
@@ -267,6 +267,18 @@ class _PlayerScreenContent extends ConsumerWidget {
               extendBodyBehindAppBar: true,
               body: Stack(
                 children: [
+                  const Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF285B40), Color(0xFF162C22), Color(0xFF090909)],
+                          stops: [0, 0.48, 1],
+                        ),
+                      ),
+                    ),
+                  ),
                   if (ref.watch(finampSettingsProvider.useCoverAsBackground)) const BlurredPlayerScreenBackground(),
                   SafeArea(
                     minimum: EdgeInsets.only(top: toolbarHeight),

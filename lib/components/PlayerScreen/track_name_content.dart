@@ -29,11 +29,11 @@ class TrackNameContent extends ConsumerWidget {
     final jellyfin_models.BaseItemDto trackBaseItemDto = currentTrack.baseItem;
 
     Widget getContent(BoxConstraints constraints, double padding) => Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: constraints.maxWidth - padding),
+        SizedBox(
+          width: double.infinity,
           child: Semantics.fromProperties(
             properties: SemanticsProperties(
               label: "${currentTrack.item.title} (${AppLocalizations.of(context)!.title})",
@@ -49,9 +49,11 @@ class TrackNameContent extends ConsumerWidget {
                     !(MediaQuery.textScalerOf(context).scale(18) > 18 * 1.11);
 
                 final textStyle = TextStyle(
-                  fontSize: 18,
-                  height: 1.2,
-                  fontWeight: Theme.brightnessOf(context) == Brightness.light ? FontWeight.w500 : FontWeight.w500,
+                  fontSize: 24,
+                  height: 1.12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.45,
+                  color: Colors.white,
                 );
 
                 final textSpan = TextSpan(text: text, style: textStyle);
@@ -67,7 +69,7 @@ class TrackNameContent extends ConsumerWidget {
                     style: textStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                    textAlign: TextAlign.start,
                   );
                 } else {
                   if (wouldOverflow && ref.watch(finampSettingsProvider.oneLineMarqueeTextButton)) {
@@ -78,17 +80,18 @@ class TrackNameContent extends ConsumerWidget {
                         id: ValueKey(currentTrack.item.id),
                         text: text,
                         style: textStyle,
-                        alignment: TextAlign.center,
+                        alignment: TextAlign.start,
                       ),
                     );
                   } else {
                     return SizedBox(
                       height: 46.0,
-                      child: Center(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
                         child: Text(
                           text,
                           style: textStyle,
-                          textAlign: TextAlign.center,
+                          textAlign: TextAlign.start,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -101,27 +104,28 @@ class TrackNameContent extends ConsumerWidget {
           ),
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            PlayerButtonsMore(item: trackBaseItemDto, queueItem: currentTrack),
             Flexible(
               child: ArtistChips(
                 baseItem: trackBaseItemDto,
-                backgroundColor: IconTheme.of(context).color!.withOpacity(0.1),
+                backgroundColor: Colors.transparent,
+                color: Colors.white.withValues(alpha: 0.76),
               ),
             ),
+            const Spacer(),
             AddToPlaylistButton(item: trackBaseItemDto, queueItem: currentTrack),
+            PlayerButtonsMore(item: trackBaseItemDto, queueItem: currentTrack),
           ],
         ),
-        Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 280),
-            child: AlbumChips(
-              baseItem: trackBaseItemDto,
-              backgroundColor: IconTheme.of(context).color!.withOpacity(0.1),
-              key: trackBaseItemDto.album == null ? null : ValueKey("${trackBaseItemDto.album}-album"),
-            ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: AlbumChips(
+            baseItem: trackBaseItemDto,
+            backgroundColor: Colors.white.withValues(alpha: 0.08),
+            color: Colors.white.withValues(alpha: 0.7),
+            key: trackBaseItemDto.album == null ? null : ValueKey("${trackBaseItemDto.album}-album"),
           ),
         ),
       ],
@@ -131,7 +135,7 @@ class TrackNameContent extends ConsumerWidget {
       builder: (context, constraints) {
         double padding = ((constraints.maxWidth - 260) / 4).clamp(0, 20);
         return Padding(
-          padding: EdgeInsets.only(left: padding, right: padding, bottom: 4.0),
+          padding: EdgeInsets.only(left: padding + 12, right: padding + 12, bottom: 4.0),
           child: getContent(constraints, padding),
         );
       },

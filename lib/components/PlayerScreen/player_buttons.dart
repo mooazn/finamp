@@ -50,7 +50,7 @@ class PlayerButtons extends ConsumerWidget {
               AppLocalizations.of(context)!.skipToPreviousTrackButtonTooltip,
               if (isDesktop) "(${GlobalShortcuts.getDisplay(SkipToPreviousIntent)})",
             ], separator: "\n"),
-            icon: const Icon(TablerIcons.player_skip_back),
+            icon: const Icon(TablerIcons.player_skip_back, color: Colors.white, size: 32),
             onPressed: () async {
               FeedbackHelper.feedback(FeedbackType.light);
               await audioHandler.skipToPrevious();
@@ -67,7 +67,7 @@ class PlayerButtons extends ConsumerWidget {
           child: _RoundedIconButton(
             width: controller.shouldShow(PlayerHideable.bigPlayButton) ? 62 : 48,
             height: controller.shouldShow(PlayerHideable.bigPlayButton) ? 62 : 48,
-            borderRadius: BorderRadius.circular(controller.shouldShow(PlayerHideable.bigPlayButton) ? 16 : 12),
+            borderRadius: BorderRadius.circular(999),
             onTap: () {
               FeedbackHelper.feedback(FeedbackType.light);
               unawaited(audioHandler.togglePlayback());
@@ -79,11 +79,13 @@ class PlayerButtons extends ConsumerWidget {
             ], separator: "\n"),
             icon: AudioFadeProgressVisualizerContainer(
               key: const Key("PlayerButtonAudioFadeProgressVisualizer"),
-              borderRadius: BorderRadius.all(
-                Radius.circular(controller.shouldShow(PlayerHideable.bigPlayButton) ? 16 : 12),
+              borderRadius: BorderRadius.all(Radius.circular(999)),
+              color: Colors.black.withAlpha(96),
+              child: Icon(
+                showPauseButton ? TablerIcons.player_pause_filled : TablerIcons.player_play_filled,
+                color: Colors.black,
+                size: 32,
               ),
-              color: IconTheme.of(context).color!.withAlpha(128),
-              child: Icon(showPauseButton ? TablerIcons.player_pause : TablerIcons.player_play, size: 32),
             ),
           ),
         ),
@@ -99,7 +101,7 @@ class PlayerButtons extends ConsumerWidget {
               AppLocalizations.of(context)!.skipToNextTrackButtonTooltip,
               if (isDesktop) "(${GlobalShortcuts.getDisplay(SkipToNextIntent)})",
             ], separator: "\n"),
-            icon: const Icon(TablerIcons.player_skip_forward),
+            icon: const Icon(TablerIcons.player_skip_forward, color: Colors.white, size: 32),
             onPressed: () async {
               FeedbackHelper.feedback(FeedbackType.light);
               await audioHandler.skipToNext();
@@ -146,7 +148,7 @@ class _RoundedIconButton extends StatelessWidget {
             BoxShadow(
               blurRadius: 2,
               offset: const Offset(0, 2),
-              color: (icon.color ?? IconTheme.of(context).color)!.withOpacity(0.25),
+              color: (icon.color ?? IconTheme.of(context).color)!.withValues(alpha: 0.25),
             ),
           ],
     );
@@ -161,7 +163,7 @@ class _RoundedIconButton extends StatelessWidget {
       height: height,
       child: Material(
         borderRadius: actualBorderRadius,
-        color: IconTheme.of(context).color!.withOpacity(0.15),
+        color: Colors.white,
         child: InkWell(borderRadius: actualBorderRadius, onTap: onTap, child: actualIcon),
       ),
     );

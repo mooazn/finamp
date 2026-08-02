@@ -200,7 +200,7 @@ class DefaultSettings {
   static const hasDownloadedPlaylistInfo = false;
   static const transcodingStreamingFormat = FinampTranscodingStreamingFormat.aacFragmentedMp4;
   static const featureChipsConfiguration = FinampFeatureChipsConfiguration(
-    enabled: true,
+    enabled: false,
     features: [
       FinampFeatureChipType.explicit,
       FinampFeatureChipType.additionalPeople,
