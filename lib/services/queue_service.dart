@@ -34,6 +34,16 @@ import 'package:uuid/uuid.dart';
 
 import '../models/music_slices.dart';
 
+bool shouldEnableAlbumAutoplay({
+  required QueueItemSourceType sourceType,
+  required bool hasSourceItem,
+  required bool beginPlaying,
+  required bool isRestoredQueue,
+  required bool isOffline,
+}) {
+  return beginPlaying && !isRestoredQueue && !isOffline && sourceType == QueueItemSourceType.album && hasSourceItem;
+}
+
 /// A track queueing service for Finamp.
 class QueueService {
   static const savedQueueSource = QueueItemSource.rawId(
@@ -863,6 +873,24 @@ class QueueService {
       // set playback order to trigger shuffle if necessary (fixes indices being wrong when starting with shuffle enabled)
       // this will run _queueFromConcatenatingAudioSource();
       await setPlaybackOrder(order, shuffleOrder: shuffleOrder);
+
+      // Spotify-style album autoplay: once a newly-started album reaches its
+      // end, continue with another complete related album. Finamp's album-mix
+      // radio already handles related-album selection and random-library
+      // fallback, so activate it for normal album playback.
+      if (shouldEnableAlbumAutoplay(
+        sourceType: source.type,
+        hasSourceItem: source.item != null,
+        beginPlaying: beginPlaying,
+        isRestoredQueue: isRestoredQueue,
+        isOffline: FinampSettingsHelper.finampSettings.isOffline,
+      )) {
+        FinampSetters.setRadioMode(RadioMode.albumMix);
+        toggleRadio(true);
+        invalidateRadioCache();
+        unawaited(maybeAddRadioTracks());
+        _queueServiceLogger.info("Enabled album autoplay for '${source.item?.name}'.");
+      }
 
       if (beginPlaying) {
         // don't await this, because it will not return until playback is finished

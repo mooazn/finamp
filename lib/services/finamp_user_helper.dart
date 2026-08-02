@@ -11,6 +11,15 @@ import 'package:logging/logging.dart';
 
 final finampUserHelperLogger = Logger("FinampUserHelper");
 
+/// MediaControl stores yt-dlp downloads in a dedicated Jellyfin library
+/// conventionally named "Mixes". Jellyfin may expose it as either Music or
+/// Mixed Content depending on how the folder was added.
+bool isMediaControlMixesLibrary(BaseItemDto? view) {
+  final collectionType = view?.collectionType;
+  final supportedCollectionType = collectionType == "music" || collectionType == "mixed" || collectionType == null;
+  return supportedCollectionType && (view?.name?.toLowerCase().contains("mix") ?? false);
+}
+
 /// Helper class for Finamp users. Note that this class does not talk to the
 /// Jellyfin server, so stuff like logging in/out is handled in JellyfinApiData.
 class FinampUserHelper {
@@ -90,8 +99,14 @@ class FinampUserHelper {
   void setCurrentUserViews(List<BaseItemDto> newViews) {
     FinampUser currentUserTemp = currentUser!;
 
+    final previousViewId = currentUserTemp.currentViewId;
+
     currentUserTemp.views = Map<BaseItemId, BaseItemDto>.fromEntries(newViews.map((e) => MapEntry(e.id, e)));
-    currentUserTemp.currentViewId = currentUserTemp.views.keys.first;
+    currentUserTemp.currentViewId = currentUserTemp.views.containsKey(previousViewId)
+        ? previousViewId
+        : currentUserTemp.views.isEmpty
+        ? null
+        : currentUserTemp.views.keys.first;
 
     _isar.writeTxnSync(() {
       _isar.finampUsers.putSync(currentUserTemp, saveLinks: false);

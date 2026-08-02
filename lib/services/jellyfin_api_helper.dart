@@ -677,6 +677,31 @@ class JellyfinApiHelper {
     return QueryResult_BaseItemDto.fromJson(response as Map<String, dynamic>).items!;
   }
 
+  /// Refreshes saved Jellyfin music libraries and automatically enrolls the
+  /// dedicated MediaControl Mixes library when it is added after initial setup.
+  /// Other library selections remain under the user's control.
+  Future<List<BaseItemDto>> refreshSelectedMusicViews() async {
+    final currentUser = _finampUserHelper.currentUser;
+    if (currentUser == null) return [];
+
+    final supportedViews = (await getViews())
+        .where((view) => view.collectionType == "music" || isMediaControlMixesLibrary(view))
+        .toList();
+    final selectedViews = supportedViews
+        .where((view) => currentUser.views.containsKey(view.id) || isMediaControlMixesLibrary(view))
+        .toList();
+    final newlySelectedViews = selectedViews.where((view) => !currentUser.views.containsKey(view.id)).toList();
+
+    final selectedIds = selectedViews.map((view) => view.id).toSet();
+    final savedIds = currentUser.views.keys.toSet();
+    final selectionChanged = selectedIds.length != savedIds.length || !selectedIds.containsAll(savedIds);
+    if (selectionChanged) {
+      _finampUserHelper.setCurrentUserViews(selectedViews);
+    }
+
+    return newlySelectedViews;
+  }
+
   static FutureProvider<List<BaseItemDto>> viewsProvider = FutureProvider(
     (Ref ref) => GetIt.instance<JellyfinApiHelper>().getViews(),
   );

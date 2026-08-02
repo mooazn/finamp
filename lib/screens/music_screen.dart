@@ -102,13 +102,23 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
   }
 
   ContentType _libraryTab(List<ContentType> sortedTabs) {
-    for (final tabType in const [
-      ContentType.albums,
-      ContentType.genericArtists,
-      ContentType.playlists,
-      ContentType.tracks,
-      ContentType.genres,
-    ]) {
+    final currentView = GetIt.instance<FinampUserHelper>().currentUser?.currentView;
+    final preferredTabs = isMediaControlMixesLibrary(currentView)
+        ? const [
+            ContentType.tracks,
+            ContentType.albums,
+            ContentType.genericArtists,
+            ContentType.playlists,
+            ContentType.genres,
+          ]
+        : const [
+            ContentType.albums,
+            ContentType.genericArtists,
+            ContentType.playlists,
+            ContentType.tracks,
+            ContentType.genres,
+          ];
+    for (final tabType in preferredTabs) {
       if (sortedTabs.contains(tabType)) return tabType;
     }
     return sortedTabs.first;
@@ -145,6 +155,23 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
   @override
   void initState() {
     super.initState();
+    if (widget.showHeader) {
+      Future.microtask(_refreshMusicLibraries);
+    }
+  }
+
+  Future<void> _refreshMusicLibraries() async {
+    if (FinampSettingsHelper.finampSettings.isOffline) return;
+    try {
+      final newLibraries = await _jellyfinApiHelper.refreshSelectedMusicViews();
+      if (newLibraries.isNotEmpty) {
+        _musicScreenLogger.info(
+          "Automatically added music libraries: ${newLibraries.map((view) => view.name).join(", ")}",
+        );
+      }
+    } catch (error, stackTrace) {
+      _musicScreenLogger.warning("Couldn't refresh music libraries", error, stackTrace);
+    }
   }
 
   @override
@@ -306,7 +333,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
         ),
         body: Builder(
           builder: (context) {
-            final child = TabBarView(
+            final tabView = TabBarView(
               controller: _tabController,
               physics: ref.watch(finampSettingsProvider.disableGesture) || MediaQuery.disableAnimationsOf(context)
                   ? const NeverScrollableScrollPhysics()
@@ -381,6 +408,15 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
                 );
               }).toList(),
             );
+            final child = Column(
+              children: [
+                if ((Platform.isAndroid || Platform.isIOS) &&
+                    !isSearching &&
+                    sortedTabs.elementAt(_tabController!.index) != ContentType.home)
+                  _MobileLibraryFilters(tabs: sortedTabs.toList(), controller: _tabController!),
+                Expanded(child: tabView),
+              ],
+            );
 
             // This tracks whether the latest scroll was the tabbar or a child widget.
             // The drawer open gesture ignores the gesture arena because it always looses to the tab view, and instead
@@ -416,6 +452,46 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
             return child;
           },
         ),
+      ),
+    );
+  }
+}
+
+class _MobileLibraryFilters extends StatelessWidget {
+  const _MobileLibraryFilters({required this.tabs, required this.controller});
+
+  final List<ContentType> tabs;
+  final TabController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final libraryTabs = tabs.where((tab) => tab != ContentType.home).toList();
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(14, 5, 14, 5),
+        scrollDirection: Axis.horizontal,
+        itemCount: libraryTabs.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final tab = libraryTabs[index];
+          final selected = tabs.indexOf(tab) == controller.index;
+          return ChoiceChip(
+            selected: selected,
+            showCheckmark: false,
+            label: Text(tab.toLocalisedString(AppLocalizations.of(context)!)),
+            labelStyle: TextStyle(
+              color: selected ? Colors.black : Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+            selectedColor: const Color(0xFF1ED760),
+            backgroundColor: const Color(0xFF242424),
+            side: BorderSide.none,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+            onSelected: (_) => controller.animateTo(tabs.indexOf(tab)),
+          );
+        },
       ),
     );
   }
