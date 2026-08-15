@@ -831,8 +831,9 @@ class TrackListItemTile extends ConsumerWidget {
       constraints: const BoxConstraints(maxHeight: defaultTileHeight),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
+        spacing: 3,
         children: [
           Flexible(
             fit: FlexFit.loose,
@@ -846,17 +847,14 @@ class TrackListItemTile extends ConsumerWidget {
                 height: 1.1,
               ),
               overflow: TextOverflow.ellipsis,
-              // It would be better to increase tile height instead of clamping titles to one line and hoping things
-              // now fit, but getting the tile height scaling correct across all widgets is difficult.
-              // TODO properly scale track list tile height
-              maxLines: MediaQuery.textScalerOf(context).scale(15.5) > 15.5 * 1.11 ? 1 : 2,
+              maxLines: 1,
             ),
           ),
           Flexible(
             fit: FlexFit.loose,
             flex: 2,
             child: Text.rich(
-              overflow: TextOverflow.clip,
+              overflow: TextOverflow.ellipsis,
               softWrap: false,
               maxLines: 1,
               TextSpan(

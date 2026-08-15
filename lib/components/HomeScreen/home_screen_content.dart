@@ -14,7 +14,6 @@ import 'package:finamp/l10n/app_localizations.dart';
 import 'package:finamp/menus/components/icon_button_with_semantics.dart';
 import 'package:finamp/menus/home_section_menu.dart';
 import 'package:finamp/models/finamp_models.dart';
-import 'package:finamp/models/jellyfin_models.dart';
 import 'package:finamp/models/music_models.dart';
 import 'package:finamp/screens/home_screen_settings_screen.dart';
 import 'package:finamp/screens/music_screen.dart';
@@ -85,7 +84,6 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                 ),
               ),
             ),
-            const _LibrarySwitcher(),
             if (ref.watch(finampSettingsProvider.homeScreenConfiguration).actions.isNotEmpty)
               SliverPadding(padding: const EdgeInsets.only(top: 10.0)),
             SliverLayoutBuilder(
@@ -207,45 +205,6 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
           ],*/
             SliverSafeArea(top: false, sliver: SliverPadding(padding: const EdgeInsets.only(bottom: 40.0))),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LibrarySwitcher extends ConsumerWidget {
-  const _LibrarySwitcher();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(FinampUserHelper.finampCurrentUserProvider);
-    final views = user?.views.values.toList() ?? const <BaseItemDto>[];
-    if (views.length < 2) return const SliverToBoxAdapter(child: SizedBox.shrink());
-
-    return SliverToBoxAdapter(
-      child: SizedBox(
-        height: 42,
-        child: ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          scrollDirection: Axis.horizontal,
-          itemCount: views.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            final view = views[index];
-            final selected = user?.currentViewId == view.id;
-            return ChoiceChip(
-              selected: selected,
-              showCheckmark: false,
-              avatar: Icon(isMediaControlMixesLibrary(view) ? TablerIcons.headphones : TablerIcons.music, size: 17),
-              label: Text(view.name ?? context.l10n.library),
-              labelStyle: TextStyle(color: selected ? Colors.black : Colors.white, fontWeight: FontWeight.w700),
-              selectedColor: const Color(0xFF1ED760),
-              backgroundColor: const Color(0xFF242424),
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-              onSelected: (_) => GetIt.instance<FinampUserHelper>().setCurrentUserCurrentViewId(view.id),
-            );
-          },
         ),
       ),
     );

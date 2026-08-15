@@ -69,7 +69,6 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
           : QueueItemSourceNameType.musicScreenTracks,
     ),
     id: "allTracks",
-    library: currentLibraryPlaceholder.resolve2(ref),
   );
 
   void _stopSearching() {
@@ -83,13 +82,9 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
   void _startSearching(List<ContentType> sortedTabs) {
     setState(() {
       isSearching = true;
-      if (_tabController != null &&
-          !_tabController!.indexIsChanging &&
-          sortedTabs.elementAt(_tabController!.index) == ContentType.home) {
-        final firstSearchableTab = sortedTabs.indexWhere((tabType) => tabType != ContentType.home);
-        if (firstSearchableTab >= 0) {
-          _tabController!.index = firstSearchableTab;
-        }
+      final songsIndex = sortedTabs.indexOf(ContentType.tracks);
+      if (_tabController != null && !_tabController!.indexIsChanging && songsIndex >= 0) {
+        _tabController!.index = songsIndex;
       }
     });
   }
@@ -102,22 +97,13 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
   }
 
   ContentType _libraryTab(List<ContentType> sortedTabs) {
-    final currentView = GetIt.instance<FinampUserHelper>().currentUser?.currentView;
-    final preferredTabs = isMediaControlMixesLibrary(currentView)
-        ? const [
-            ContentType.tracks,
-            ContentType.albums,
-            ContentType.genericArtists,
-            ContentType.playlists,
-            ContentType.genres,
-          ]
-        : const [
-            ContentType.albums,
-            ContentType.genericArtists,
-            ContentType.playlists,
-            ContentType.tracks,
-            ContentType.genres,
-          ];
+    const preferredTabs = [
+      ContentType.tracks,
+      ContentType.albums,
+      ContentType.genericArtists,
+      ContentType.playlists,
+      ContentType.genres,
+    ];
     for (final tabType in preferredTabs) {
       if (sortedTabs.contains(tabType)) return tabType;
     }
@@ -131,12 +117,16 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
   }
 
   List<ContentType> _visibleTabs() {
-    final currentView = ref.watch(FinampUserHelper.finampCurrentUserProvider)?.currentView;
-    final enabledTabs = ref
+    final tabs = ref
         .watch(finampSettingsProvider.tabOrder)
         .where((tab) => tab.isTab)
-        .where((tab) => ref.watch(finampSettingsProvider.showTabs(tab)) ?? false);
-    return visibleMusicTabsForLibrary(enabledTabs, currentView);
+        .where((tab) => ref.watch(finampSettingsProvider.showTabs(tab)) ?? false)
+        .toList();
+    if (!tabs.contains(ContentType.tracks)) {
+      final homeIndex = tabs.indexOf(ContentType.home);
+      tabs.insert(homeIndex < 0 ? 0 : homeIndex + 1, ContentType.tracks);
+    }
+    return tabs;
   }
 
   void _buildTabController() {
@@ -148,19 +138,11 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
     } else {
       final tabs = _visibleTabs();
       final requestedIndex = widget.initialTab == null ? -1 : tabs.indexOf(widget.initialTab!);
-      final mixesSongsIndex =
-          isMediaControlMixesLibrary(ref.watch(FinampUserHelper.finampCurrentUserProvider)?.currentView)
-          ? tabs.indexOf(ContentType.tracks)
-          : -1;
 
       _tabController = TabController(
         length: tabs.length,
         vsync: this,
-        initialIndex: requestedIndex >= 0
-            ? requestedIndex
-            : mixesSongsIndex >= 0
-            ? mixesSongsIndex
-            : 0,
+        initialIndex: requestedIndex >= 0 ? requestedIndex : 0,
       );
     }
 
@@ -270,7 +252,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
     if (_tabController == null) {
       _buildTabController();
     }
-    final currentUser = ref.watch(FinampUserHelper.finampCurrentUserProvider);
+    ref.watch(FinampUserHelper.finampCurrentUserProvider);
     // Get the filtered tab or the tabs from the user's tab order,
     // and filter them to only include enabled tabs
     final sortedTabs = widget.singleTabConfig != null
@@ -385,10 +367,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
                 } else {
                   displayable = MusicScreenPlayable(
                     tab: contentTabType,
-                    // Use the resolved library as part of the paging provider's
-                    // identity. A shared "current library" placeholder can
-                    // otherwise retain pages loaded for the previous library.
-                    library: currentUser?.currentViewId ?? currentLibraryPlaceholder,
+                    library: allLibraryPlaceholder,
                     source: musicScreenSource,
                     sortConfig: ref
                         .watch(resolveSortProvider(sortAndFilterControllerMap[contentTabType]!))
@@ -429,11 +408,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
                 if ((Platform.isAndroid || Platform.isIOS) &&
                     !isSearching &&
                     sortedTabs.elementAt(_tabController!.index) != ContentType.home)
-                  _MobileLibraryFilters(
-                    tabs: sortedTabs.toList(),
-                    controller: _tabController!,
-                    useSongsLabel: isMediaControlMixesLibrary(currentUser?.currentView),
-                  ),
+                  _MobileLibraryFilters(tabs: sortedTabs.toList(), controller: _tabController!),
                 Expanded(child: tabView),
               ],
             );
@@ -478,11 +453,10 @@ class _MusicScreenState extends ConsumerState<MusicScreen> with TickerProviderSt
 }
 
 class _MobileLibraryFilters extends StatelessWidget {
-  const _MobileLibraryFilters({required this.tabs, required this.controller, required this.useSongsLabel});
+  const _MobileLibraryFilters({required this.tabs, required this.controller});
 
   final List<ContentType> tabs;
   final TabController controller;
-  final bool useSongsLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -500,11 +474,7 @@ class _MobileLibraryFilters extends StatelessWidget {
           return ChoiceChip(
             selected: selected,
             showCheckmark: false,
-            label: Text(
-              useSongsLabel && tab == ContentType.tracks
-                  ? "Songs"
-                  : tab.toLocalisedString(AppLocalizations.of(context)!),
-            ),
+            label: Text(tab == ContentType.tracks ? "Songs" : tab.toLocalisedString(AppLocalizations.of(context)!)),
             labelStyle: TextStyle(
               color: selected ? Colors.black : Colors.white,
               fontSize: 13,

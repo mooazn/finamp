@@ -39,7 +39,12 @@ class PlaybackAction extends ConsumerWidget {
         clipBehavior: Clip.none,
         children: [
           Center(
-            child: Icon(icon, color: enabled ? iconColor : iconColor.withOpacity(0.5), size: mainSize, weight: 1.0),
+            child: Icon(
+              icon,
+              color: enabled ? iconColor : iconColor.withValues(alpha: 0.5),
+              size: mainSize,
+              weight: 1.0,
+            ),
           ),
           if (addShuffleIcon)
             Positioned(
@@ -48,7 +53,7 @@ class PlaybackAction extends ConsumerWidget {
               child: Icon(
                 TablerIcons.arrows_shuffle,
                 size: badgeSize,
-                color: enabled ? iconColor : iconColor.withOpacity(0.5),
+                color: enabled ? iconColor : iconColor.withValues(alpha: 0.5),
               ),
             ),
         ],
@@ -60,7 +65,7 @@ class PlaybackAction extends ConsumerWidget {
       child: IconButton(
         icon: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           spacing: compactLayout ? 0 : 9,
           children: [
             Padding(

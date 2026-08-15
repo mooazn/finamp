@@ -84,7 +84,7 @@ Future<FinampDisplayable<FinampPlayable>> resolveSection(Ref ref, HomeScreenSect
       }
       return MusicScreenPlayable(
         tab: tabSection.contentType,
-        library: tabSection.libraryId,
+        library: tabSection.libraryId == currentLibraryPlaceholder ? allLibraryPlaceholder : tabSection.libraryId,
         source: source,
         sortConfig: resolvedSort,
       );

@@ -20,16 +20,6 @@ bool isMediaControlMixesLibrary(BaseItemDto? view) {
   return supportedCollectionType && (view?.name?.toLowerCase().contains("mix") ?? false);
 }
 
-/// Mixes contains standalone audio downloads rather than album-shaped music.
-/// Keep Home when enabled, but always expose the track browser for this view
-/// and omit album-oriented sections that would only render empty pages.
-List<ContentType> visibleMusicTabsForLibrary(Iterable<ContentType> enabledTabs, BaseItemDto? view) {
-  final tabs = enabledTabs.toList();
-  if (!isMediaControlMixesLibrary(view)) return tabs;
-
-  return [if (tabs.contains(ContentType.home)) ContentType.home, ContentType.tracks];
-}
-
 /// Helper class for Finamp users. Note that this class does not talk to the
 /// Jellyfin server, so stuff like logging in/out is handled in JellyfinApiData.
 class FinampUserHelper {

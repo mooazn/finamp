@@ -4,9 +4,7 @@ import 'dart:math';
 import 'package:finamp/components/HomeScreen/finamp_music_screen_header.dart';
 import 'package:finamp/components/MusicScreen/offline_mode_status_label.dart';
 import 'package:finamp/components/MusicScreen/offline_mode_switch_list_tile.dart';
-import 'package:finamp/components/MusicScreen/view_list_tile.dart';
 import 'package:finamp/components/finamp_icon.dart';
-import 'package:finamp/components/themed_bottom_sheet.dart';
 import 'package:finamp/l10n/app_localizations.dart';
 import 'package:finamp/models/finamp_models.dart';
 import 'package:finamp/screens/downloads_screen.dart';
@@ -15,7 +13,6 @@ import 'package:finamp/screens/playback_history_screen.dart';
 import 'package:finamp/screens/queue_restore_screen.dart';
 import 'package:finamp/screens/settings_screen.dart';
 import 'package:finamp/services/downloads_service.dart';
-import 'package:finamp/services/feedback_helper.dart';
 import 'package:finamp/services/finamp_settings_helper.dart';
 import 'package:finamp/services/finamp_user_helper.dart';
 import 'package:finamp/services/server_info_provider.dart';
@@ -33,7 +30,6 @@ class MusicScreenDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final finampUserHelper = GetIt.instance<FinampUserHelper>();
     final downloadsService = GetIt.instance<DownloadsService>();
     final colorScheme = ColorScheme.of(context);
     final FinampSettings? settings = ref.watch(finampSettingsProvider).value;
@@ -167,27 +163,6 @@ class MusicScreenDrawer extends ConsumerWidget {
                         dense: true,
                       ),
                     ]),
-                  ),
-                  // This causes an error when logging out if we show this widget
-                  if (finampUserHelper.currentUser != null) ...[
-                    SliverPadding(
-                      padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 12.0, bottom: 4.0),
-                      sliver: SliverToBoxAdapter(
-                        child: Text.rich(
-                          TextSpan(
-                            text: AppLocalizations.of(context)!.activeLibraries,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ],
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      return ViewListTile(view: finampUserHelper.currentUser!.views.values.elementAt(index));
-                    }, childCount: finampUserHelper.currentUser!.views.length),
                   ),
                   SliverFillRemaining(
                     hasScrollBody: false,

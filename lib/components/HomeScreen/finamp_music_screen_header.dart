@@ -23,7 +23,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:get_it/get_it.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../extensions/localizations.dart';
 import '../../menus/home_section_menu.dart';
@@ -231,33 +230,21 @@ class FinampMusicScreenHeader extends ConsumerWidget implements PreferredSizeWid
                   Expanded(
                     child: GestureDetector(
                       onTap: openMenu,
-                      child: FutureBuilder(
-                        future: PackageInfo.fromPlatform(),
-                        builder: (context, asyncSnapshot) {
-                          final appName = asyncSnapshot.data?.appName ?? AppLocalizations.of(context)!.finamp;
-                          return Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  singleTabConfig?.getTitle(context.l10n) ??
-                                      finampUserHelper.currentUser?.currentView?.name ??
-                                      appName,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.5,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (singleTabConfig == null) ...[
-                                const SizedBox(width: 4),
-                                const Icon(TablerIcons.chevron_down, size: 19, color: Color(0xFFB3B3B3)),
-                              ],
-                            ],
-                          );
-                        },
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              singleTabConfig?.getTitle(context.l10n) ?? context.l10n.music,
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (singleTabConfig == null) ...[
+                            const SizedBox(width: 4),
+                            const Icon(TablerIcons.chevron_down, size: 19, color: Color(0xFFB3B3B3)),
+                          ],
+                        ],
                       ),
                     ),
                   ),
@@ -409,10 +396,16 @@ class FinampMusicScreenHeader extends ConsumerWidget implements PreferredSizeWid
                                   return SizedBox.shrink();
                                 },
                               ),
-                              Text(tabType.toLocalisedString(context.l10n), style: textStyle),
+                              Text(
+                                tabType == ContentType.tracks ? "Songs" : tabType.toLocalisedString(context.l10n),
+                                style: textStyle,
+                              ),
                             ],
                           )
-                        : Text(tabType.toLocalisedString(context.l10n), style: textStyle),
+                        : Text(
+                            tabType == ContentType.tracks ? "Songs" : tabType.toLocalisedString(context.l10n),
+                            style: textStyle,
+                          ),
                   ),
                 ),
               );

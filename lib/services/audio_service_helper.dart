@@ -22,11 +22,17 @@ class AudioServiceHelper {
   final _finampUserHelper = GetIt.instance<FinampUserHelper>();
   final audioServiceHelperLogger = Logger("AudioServiceHelper");
 
-  /// Shuffles every track in the user's current view.
-  Future<void> shuffleAll({required bool onlyShowFavorites, BaseItemDto? genreFilter, int? itemCount}) async {
+  /// Shuffles tracks across the unified music catalog by default.
+  Future<void> shuffleAll({
+    required bool onlyShowFavorites,
+    BaseItemDto? genreFilter,
+    int? itemCount,
+    bool allLibraries = true,
+  }) async {
+    final library = allLibraries ? null : _finampUserHelper.currentUser?.currentView;
     List<jellyfin_models.BaseItemDto>? items = (await getShuffleAllTracks(
       onlyShowFavorites: onlyShowFavorites,
-      library: _finampUserHelper.currentUser!.currentView!,
+      library: library,
       genreFilter: genreFilter,
       itemCount: itemCount,
     ))?.$1;
@@ -48,7 +54,7 @@ class AudioServiceHelper {
                 type: onlyShowFavorites ? QueueItemSourceNameType.yourLikes : QueueItemSourceNameType.shuffleAll,
               ),
               id: "shuffleAll",
-              library: _finampUserHelper.currentUser!.currentView!.id,
+              library: library?.id,
             );
 
       await _queueService.startPlayback(items: items, source: source, order: FinampPlaybackOrder.shuffled);
@@ -57,7 +63,7 @@ class AudioServiceHelper {
 
   Future<(List<BaseItemDto>, int)?> getShuffleAllTracks({
     required bool onlyShowFavorites,
-    required BaseItemDto library,
+    BaseItemDto? library,
     BaseItemDto? genreFilter,
     int? itemCount,
   }) async {
@@ -67,7 +73,7 @@ class AudioServiceHelper {
       // shuffle them before making a sublist, but I couldn't think of a better
       // way.
       final items = (await _isarDownloader.getAllTracks(
-        viewFilter: library.id,
+        viewFilter: library?.id,
         genreFilter: genreFilter?.id,
         onlyFavorites: onlyShowFavorites,
         nullableViewFilters: FinampSettingsHelper.finampSettings.showDownloadsWithUnknownLibrary,
